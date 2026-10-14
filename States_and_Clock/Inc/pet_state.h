@@ -29,6 +29,7 @@ typedef enum
     PET_STATE_ACTION_A,   /* TODO: rename once the peripheral/action is decided */
     PET_STATE_ACTION_B,   /* TODO: rename once the peripheral/action is decided */
     PET_STATE_DEAD,
+    PET_STATE_RUNAWAY,
     PET_STATE_COUNT
 } PetState;
 
