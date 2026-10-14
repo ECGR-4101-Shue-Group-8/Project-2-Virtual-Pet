@@ -200,6 +200,7 @@ void pet_update(void)
         break;
 
     case PET_STATE_DEAD:
+    case PET_STATE_RUNAWAY:
         if (event == PET_EVENT_RESET)
         {
             pet_init();
