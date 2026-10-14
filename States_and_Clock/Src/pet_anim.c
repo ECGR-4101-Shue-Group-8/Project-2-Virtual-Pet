@@ -25,6 +25,7 @@ __attribute__((weak)) void anim_idle(uint32_t frame)     { (void)frame; }
 __attribute__((weak)) void anim_feed(uint32_t frame)     { (void)frame; }
 __attribute__((weak)) void anim_action_a(uint32_t frame) { (void)frame; }
 __attribute__((weak)) void anim_action_b(uint32_t frame) { (void)frame; }
+__attribute__((weak)) void anim_runaway(uint32_t frame)  { (void)frame; }
 __attribute__((weak)) void anim_dead(uint32_t frame)     { (void)frame; }
 
 static void play_frame(PetState state, uint32_t frame)
