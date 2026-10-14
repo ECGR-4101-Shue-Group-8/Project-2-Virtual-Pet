@@ -14,6 +14,7 @@ static const PetAnimFn state_anims[PET_STATE_COUNT] =
     [PET_STATE_FEED]     = anim_feed,
     [PET_STATE_ACTION_A] = anim_action_a,
     [PET_STATE_ACTION_B] = anim_action_b,
+    [PET_STATE_RUNAWAY] = anim_runaway,
     [PET_STATE_DEAD]     = anim_dead,
 };
 
