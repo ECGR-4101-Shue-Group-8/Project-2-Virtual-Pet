@@ -86,6 +86,7 @@ static void enter_state(PetState next)
 
     case PET_STATE_IDLE:
     case PET_STATE_DEAD:
+    case PET_STATE_RUNAWAY:
     default:
         break;
     }
@@ -113,11 +114,11 @@ static void stats_tick(void)
     }
 }
 
-static int is_dying(void)
+/*static int is_dying(void)
 {
     return (stats.hunger >= PET_STAT_MAX) || (stats.happiness == 0U);
 }
-
+*/
 /* ---------------------------------------------------------------- API --- */
 void pet_init(void)
 {
@@ -151,19 +152,32 @@ PetStats pet_get_stats(void)
 
 void pet_update(void)
 {
-    if (state != PET_STATE_DEAD)
+    if (state != PET_STATE_DEAD &&
+    state != PET_STATE_RUNAWAY)
+{
+    while (clock_stat_tick_pending())
     {
-        while (clock_stat_tick_pending())
-        {
-            stats_tick();
-        }
-
-        if (is_dying())
-        {
-            enter_state(PET_STATE_DEAD);
-            return;
-        }
+        stats_tick();
     }
+
+    /*
+     * Starvation causes death.
+     */
+    if (stats.hunger >= PET_STAT_MAX)
+    {
+        enter_state(PET_STATE_DEAD);
+        return;
+    }
+
+    /*
+     * Zero happiness causes the pet to run away.
+     */
+    if (stats.happiness == 0U)
+    {
+        enter_state(PET_STATE_RUNAWAY);
+        return;
+    }
+}
 
     PetEvent event = take_event();
 
