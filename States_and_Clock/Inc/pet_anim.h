@@ -32,6 +32,7 @@ void anim_idle(uint32_t frame);
 void anim_feed(uint32_t frame);
 void anim_action_a(uint32_t frame);
 void anim_action_b(uint32_t frame);
+void anim_runaway(uint32_t frame);
 void anim_dead(uint32_t frame);
 
 /* Called by pet_state.c. Not needed elsewhere. */
