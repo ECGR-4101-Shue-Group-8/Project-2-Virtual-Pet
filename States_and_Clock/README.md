@@ -1,0 +1,95 @@
+# States and Clock
+
+Pet state machine, hunger/happiness stats, the 1 Hz stat timer, and the hook that plays an LCD animation for each state. Written for the HAL/CubeMX project in `Lab1_NUCLEO_L496.zip`. It has been test-built against that project but not yet run on a board.
+
+| File | What it does |
+|---|---|
+| `clock.c/.h` | TIM6 stat timer (1 tick per second) and `clock_millis()` (wraps `HAL_GetTick()`) |
+| `pet_state.c/.h` | States: Idle, Feed, Action A, Action B, Dead. Hunger and happiness stats |
+| `pet_anim.c/.h` | Calls the matching LCD animation for whichever state the pet is in |
+
+## Adding it to the project
+
+1. Copy `Inc/*` into `Core/Inc/` and `Src/*` into `Core/Src/`.
+2. In the project's top-level `CMakeLists.txt`, under `# Add user sources here`, add:
+   ```cmake
+   Core/Src/clock.c
+   Core/Src/pet_state.c
+   Core/Src/pet_anim.c
+   ```
+3. In `main.c`:
+   ```c
+   #include "clock.h"
+   #include "pet_state.h"
+
+   int main(void)
+   {
+     HAL_Init();
+     SystemClock_Config();
+     MX_GPIO_Init();
+     MX_SPI1_Init();
+     ILI9341_Init(&hspi1);
+
+     clock_init();   // after SystemClock_Config()
+     pet_init();     // after the LCD is ready, since it draws the first idle frame
+
+     while (1)
+     {
+       // read inputs, then e.g. pet_request(PET_EVENT_FEED);
+       pet_update();
+     }
+   }
+   ```
+   Don't use `HAL_Delay()` for long waits in the main loop. Stats are counted by interrupt, so they stay correct during a delay, but buttons and animations freeze until it ends.
+
+No CubeMX changes are needed. TIM6 is set up directly through its registers, so the HAL TIM module doesn't have to be enabled. Don't assign TIM6 to anything else in the `.ioc`.
+
+## Clock
+
+The system clock is still the existing `SystemClock_Config()` in `main.c` (MSI -> PLL = 56.8 MHz). TIM6 reads the real bus clock when it starts, so if the system clock is changed later, the stat tick stays at 1 second.
+
+## Inputs (for the peripheral code)
+
+Call these from anywhere, including interrupts:
+
+```c
+pet_request(PET_EVENT_FEED);
+pet_request(PET_EVENT_ACTION_A);   // rename once the action is decided
+pet_request(PET_EVENT_ACTION_B);
+pet_request(PET_EVENT_RESET);      // start a new pet after death
+```
+
+Requests made while the pet is busy with a feed or action (2 seconds) are ignored.
+
+## Animations (for the LCD code)
+
+Each state calls one function with a frame number:
+
+| State | Function |
+|---|---|
+| Idle | `anim_idle(frame)` |
+| Feed | `anim_feed(frame)` |
+| Action A | `anim_action_a(frame)` |
+| Action B | `anim_action_b(frame)` |
+| Dead | `anim_dead(frame)` |
+
+- `frame == 0` means the state was just entered: clear the area and draw the first frame.
+- After that, the function is called with frame 1, 2, 3… every 100 ms (`PET_ANIM_FRAME_MS`).
+- For a 4-frame sprite sheet such as IDLE MONKEY.png, draw sprite `frame % 4`. If it should animate slower than every 100 ms, use `(frame / 2) % 4`.
+- Draw one frame and return quickly.
+- `pet_get_stats()` gives hunger and happiness, for example to show a sad idle animation.
+
+To connect the real animations, either write functions with these exact names (they automatically replace the empty placeholders), or put your own function names in the `state_anims` table in `pet_anim.c`.
+
+## Stats
+
+Both stats run from 0 to 100. All of the numbers below are `#define`s at the top of `pet_state.c`.
+
+| Stat | Meaning | Change over time |
+|---|---|---|
+| Hunger | 0 = full, 100 = starving | +1 every 5 s |
+| Happiness | 100 = happy, 0 = miserable | -1 every 8 s, twice as fast when hunger is above 70 |
+
+- **Feeding:** hunger -25, happiness +5. Feeding while already full costs 10 happiness instead.
+- **Actions A and B:** happiness +15 each (placeholders until the actions are decided).
+- **Death:** the pet dies when hunger reaches 100 or happiness reaches 0.
