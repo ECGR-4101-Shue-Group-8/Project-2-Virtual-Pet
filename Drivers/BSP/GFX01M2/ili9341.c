@@ -243,3 +243,74 @@ void ILI9341_DrawString(uint16_t x, uint16_t y, const char *str, uint16_t color,
         x = (uint16_t)(x + (GFX_FONT5X7_WIDTH + 1) * size);
     }
 }
+
+void ILI9341_DrawRGB565Bitmap(
+    uint16_t x,
+    uint16_t y,
+    uint16_t width,
+    uint16_t height,
+    const uint16_t *pixels
+)
+{
+    static uint8_t row_buffer[ILI9341_WIDTH * 2];
+
+    if (pixels == NULL || width == 0 || height == 0)
+    {
+        return;
+    }
+
+    if (x >= ILI9341_WIDTH || y >= ILI9341_HEIGHT)
+    {
+        return;
+    }
+
+    /* Reject bitmaps that extend beyond the LCD */
+    if ((uint32_t)x + width > ILI9341_WIDTH ||
+        (uint32_t)y + height > ILI9341_HEIGHT)
+    {
+        return;
+    }
+
+    /* Define the region to draw */
+    LCD_SetAddressWindow(
+        x,
+        y,
+        x + width - 1,
+        y + height - 1
+    );
+
+    /* Set LCD to data mode */
+    HAL_GPIO_WritePin(
+        LCD_DC_GPIO_Port,
+        LCD_DC_Pin,
+        GPIO_PIN_SET
+    );
+
+    LCD_CS_Low();
+
+    /* Send each row of pixels */
+    for (uint16_t row = 0; row < height; row++)
+    {
+        for (uint16_t col = 0; col < width; col++)
+        {
+            uint16_t color =
+                pixels[(uint32_t)row * width + col];
+
+            /* RGB565 -> SPI bytes (MSB first) */
+            row_buffer[col * 2] =
+                (uint8_t)(color >> 8);
+
+            row_buffer[col * 2 + 1] =
+                (uint8_t)(color & 0xFF);
+        }
+
+        HAL_SPI_Transmit(
+            ili9341_hspi,
+            row_buffer,
+            width * 2,
+            HAL_MAX_DELAY
+        );
+    }
+
+    LCD_CS_High();
+}
