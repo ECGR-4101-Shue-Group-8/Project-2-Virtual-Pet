@@ -2,12 +2,7 @@
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : X-NUCLEO-GFX01M2 LCD demo for the NUCLEO-L496ZG-P
-  *
-  * This demo drives the 2.2" ILI9341 QVGA display on the X-NUCLEO-GFX01M2
-  * expansion board over SPI1 and cycles through a few simple graphics demos:
-  * color bars, filled/outlined shapes, text, and a live joystick (B1)
-  * readout. See Drivers/BSP/GFX01M2 for the small display driver used here.
+  * @brief          : 
   *
   * WIRING - the GFX01M2 plugs directly onto the top of this board's CN11/CN12
   * ST Morpho headers. NOTE: ST's own datasheet (DB4236) only lists Nucleo-64
@@ -17,23 +12,15 @@
   * schematic (mb1312-l4xxzx-a03): RESET=PA1, CS=PA9, DC=PB10, SPI1 SCK/MISO/
   * MOSI=PA5/PA6/PA7. See Drivers/BSP/GFX01M2/gfx01m2_conf.h for the full
   * derivation and the PA9/USB_VBUS_Pin sharing note.
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "ili9341.h"
 #include "gfx01m2_conf.h"
+#include "clock.h"
+#include "pet_state.h"
+#include "ui.h"
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
@@ -75,121 +62,75 @@ static uint8_t Joystick_Read(void)
   */
 int main(void)
 {
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+    HAL_Init();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+    SystemClock_Config();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_SPI1_Init();
+    MX_GPIO_Init();
+    MX_SPI1_Init();
 
-  /* Initialize the LCD and show a splash screen */
-  ILI9341_Init(&hspi1);
-  ILI9341_DrawString(18, 12, "GFX01M2 LCD DEMO", ILI9341_COLOR_WHITE, ILI9341_COLOR_BLACK, 2);
-  ILI9341_DrawString(30, 40, "NUCLEO-L496ZG-P", ILI9341_COLOR_CYAN, ILI9341_COLOR_BLACK, 1);
-  HAL_Delay(2000);
+    /* Initialize display */
 
-  /* Infinite loop: cycle through the demo pages */
-  while (1)
-  {
-    Demo_ColorBars();
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    HAL_Delay(1500);
+    ILI9341_Init(&hspi1);
 
-    Demo_Shapes();
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    HAL_Delay(1500);
+    /* Initialize virtual pet subsystems */
 
-    Demo_Text();
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-    HAL_Delay(1500);
+    clock_init();
 
-    Demo_Joystick();
-    HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
-  }
+    ui_init();
+
+    pet_init();
+
+
+    /* Joystick debounce */
+
+    uint8_t previous_joystick = 0;
+
+    uint32_t last_input_ms = 0;
+
+
+    while (1)
+    {
+        uint32_t now = HAL_GetTick();
+
+        /* Read physical joystick */
+
+        uint8_t joystick = Joystick_Read();
+
+
+        /*
+         * Generate one event per press.
+         * The joystick must be released before
+         * another event can be generated.
+         */
+
+        if (joystick != 0 &&
+            previous_joystick == 0 &&
+            (now - last_input_ms) >= 150U)
+        {
+            ui_joystick_event(joystick);
+
+            last_input_ms = now;
+        }
+
+        previous_joystick = joystick;
+
+
+        /* Update pet state, stats, animations */
+
+        pet_update();
+
+
+        /* Small delay to limit polling */
+
+        HAL_Delay(10);
+    }
 }
 
 /**
   * @brief  Fills the screen with a set of vertical color bars.
   */
-static void Demo_ColorBars(void)
-{
-  static const uint16_t colors[] =
-  {
-    ILI9341_COLOR_WHITE, ILI9341_COLOR_YELLOW, ILI9341_COLOR_CYAN, ILI9341_COLOR_GREEN,
-    ILI9341_COLOR_MAGENTA, ILI9341_COLOR_RED, ILI9341_COLOR_BLUE, ILI9341_COLOR_ORANGE
-  };
-  const uint16_t bar_count = sizeof(colors) / sizeof(colors[0]);
-  const uint16_t bar_width = ILI9341_WIDTH / bar_count;
-  uint16_t i;
 
-  for (i = 0; i < bar_count; i++)
-  {
-    ILI9341_FillRect((uint16_t)(i * bar_width), 0, bar_width, ILI9341_HEIGHT, colors[i]);
-  }
-}
-
-/**
-  * @brief  Draws a handful of filled and outlined shapes.
-  */
-static void Demo_Shapes(void)
-{
-  ILI9341_FillScreen(ILI9341_COLOR_BLACK);
-
-  ILI9341_FillRect(20, 20, 80, 60, ILI9341_COLOR_RED);
-  ILI9341_DrawRect(120, 20, 80, 60, ILI9341_COLOR_GREEN);
-
-  ILI9341_DrawLine(20, 110, 220, 110, ILI9341_COLOR_WHITE);
-  ILI9341_DrawLine(20, 110, 220, 260, ILI9341_COLOR_YELLOW);
-  ILI9341_DrawLine(220, 110, 20, 260, ILI9341_COLOR_CYAN);
-
-  ILI9341_FillRect(70, 220, 100, 40, ILI9341_COLOR_BLUE);
-  ILI9341_DrawRect(65, 215, 110, 50, ILI9341_COLOR_WHITE);
-}
-
-/**
-  * @brief  Demonstrates text rendering at a few different sizes.
-  */
-static void Demo_Text(void)
-{
-  ILI9341_FillScreen(ILI9341_COLOR_BLACK);
-
-  ILI9341_DrawString(10, 20, "HELLO CLASS!", ILI9341_COLOR_WHITE, ILI9341_COLOR_BLACK, 3);
-  ILI9341_DrawString(10, 60, "ILI9341 QVGA TFT", ILI9341_COLOR_GREEN, ILI9341_COLOR_BLACK, 2);
-  ILI9341_DrawString(10, 90, "DRIVEN OVER SPI1", ILI9341_COLOR_GREEN, ILI9341_COLOR_BLACK, 2);
-  ILI9341_DrawString(10, 130, "TRY CHANGING THE", ILI9341_COLOR_YELLOW, ILI9341_COLOR_BLACK, 1);
-  ILI9341_DrawString(10, 145, "COLORS AND TEXT IN", ILI9341_COLOR_YELLOW, ILI9341_COLOR_BLACK, 1);
-  ILI9341_DrawString(10, 160, "DEMO TEXT() IN MAIN.C", ILI9341_COLOR_YELLOW, ILI9341_COLOR_BLACK, 1);
-}
-
-/**
-  * @brief  Live joystick (B1) status readout for a few seconds.
-  */
-static void Demo_Joystick(void)
-{
-  uint32_t start = HAL_GetTick();
-  char line[] = "L:_ C:_ D:_ R:_ U:_";
-
-  ILI9341_FillScreen(ILI9341_COLOR_BLACK);
-  ILI9341_DrawString(10, 10, "JOYSTICK TEST", ILI9341_COLOR_WHITE, ILI9341_COLOR_BLACK, 2);
-  ILI9341_DrawString(10, 40, "MOVE THE STICK (B1)", ILI9341_COLOR_YELLOW, ILI9341_COLOR_BLACK, 1);
-
-  while ((HAL_GetTick() - start) < 5000U)
-  {
-    uint8_t joy = Joystick_Read();
-
-    line[2]  = (joy & JOY_LEFT_MASK)   ? '1' : '0';
-    line[6]  = (joy & JOY_CENTER_MASK) ? '1' : '0';
-    line[10] = (joy & JOY_DOWN_MASK)   ? '1' : '0';
-    line[14] = (joy & JOY_RIGHT_MASK)  ? '1' : '0';
-    line[18] = (joy & JOY_UP_MASK)     ? '1' : '0';
-
-    ILI9341_DrawString(10, 70, line, ILI9341_COLOR_GREEN, ILI9341_COLOR_BLACK, 2);
-    HAL_Delay(50);
-  }
-}
 
 /**
   * @brief SPI1 Initialization Function
