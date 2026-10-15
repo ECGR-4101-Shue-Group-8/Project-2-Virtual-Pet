@@ -10,7 +10,7 @@
  * will point to the generated pixel arrays.
  *
  * Current intended displayed frame size:
- *      128 x 128 pixels
+ *      64 x 64 pixels
  *
  * The original Piskel artwork can remain 64 x 64 and be
  * upscaled 2x with nearest-neighbor before RGB565 conversion.
@@ -18,73 +18,73 @@
 
 extern const uint16_t idle_pixels[];
 extern const uint16_t feed_pixels[];
-extern const uint16_t action_a_pixels[];
-extern const uint16_t action_b_pixels[];
+//extern const uint16_t action_a_pixels[];
+//extern const uint16_t action_b_pixels[];
 extern const uint16_t runaway_pixels[];
 extern const uint16_t dead_pixels[];
 
-/* ----------------------- IDLE ----------------------- */
+/* Idle */
 
 const SpriteSheet sprite_idle =
 {
-    .pixels       = idle_pixels,
-    .frame_width  = 64U,
-    .frame_height = 64U,
-    .frame_count  = 4U
+    .pixels = idle_pixels,
+    .frame_width = 64,
+    .frame_height = 64,
+    .frame_count = 4
 };
 
 
-/* ----------------------- FEED ----------------------- */
+/* Feeding */
 
 const SpriteSheet sprite_feed =
 {
-    .pixels       = feed_pixels,
-    .frame_width  = 64U,
-    .frame_height = 64U,
-    .frame_count  = 4U
+    .pixels = feed_pixels,
+    .frame_width = 64,
+    .frame_height = 64,
+    .frame_count = 4
 };
 
 
-/* --------------------- ACTION A --------------------- */
+/* Play - temporarily uses idle artwork */
 
 const SpriteSheet sprite_action_a =
 {
-    .pixels       = action_a_pixels,
-    .frame_width  = 64U,
-    .frame_height = 64U,
-    .frame_count  = 4U
+    .pixels = idle_pixels,
+    .frame_width = 64,
+    .frame_height = 64,
+    .frame_count = 4
 };
 
 
-/* --------------------- ACTION B --------------------- */
+/* Rest - temporarily uses idle artwork */
 
 const SpriteSheet sprite_action_b =
 {
-    .pixels       = action_b_pixels,
-    .frame_width  = 64U,
-    .frame_height = 64U,
-    .frame_count  = 4U
+    .pixels = idle_pixels,
+    .frame_width = 64,
+    .frame_height = 64,
+    .frame_count = 4
 };
 
 
-/* --------------------- RUNAWAY ---------------------- */
-
-const SpriteSheet sprite_runaway =
-{
-    .pixels       = runaway_pixels,
-    .frame_width  = 64U,
-    .frame_height = 64U,
-    .frame_count  = 4U
-};
-
-/* ----------------------- DEAD ----------------------- */
+/* Death */
 
 const SpriteSheet sprite_dead =
 {
-    .pixels       = dead_pixels,
-    .frame_width  = 64U,
-    .frame_height = 64U,
-    .frame_count  = 1U
+    .pixels = dead_pixels,
+    .frame_width = 64,
+    .frame_height = 64,
+    .frame_count = 1
 };
 
+
+/* Runaway */
+
+const SpriteSheet sprite_runaway =
+{
+    .pixels = runaway_pixels,
+    .frame_width = 64,
+    .frame_height = 64,
+    .frame_count = 4
+};
 
