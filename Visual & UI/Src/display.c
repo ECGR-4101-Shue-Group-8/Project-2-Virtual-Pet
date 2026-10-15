@@ -29,8 +29,8 @@ void display_draw_sprite_frame(
     ILI9341_DrawRGB565Bitmap(
         x,
         y,
-        sheet->frame_width,
-        sheet->frame_height,
+        width,
+        height,
         frame_pixels
     );
 }
