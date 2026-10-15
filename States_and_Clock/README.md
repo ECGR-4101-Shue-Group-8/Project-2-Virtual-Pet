@@ -1,11 +1,11 @@
 # States and Clock
 
-Pet state machine, hunger/happiness stats, the 1 Hz stat timer, and the hook that plays an LCD animation for each state. Written for the HAL/CubeMX project in `Lab1_NUCLEO_L496.zip`. It has been test-built against that project but not yet run on a board.
+Pet state machine, hunger/happiness/energy stats, the 1 Hz stat timer, and the hook that plays an LCD animation for each state. Written for the HAL/CubeMX project in `Lab1_NUCLEO_L496.zip`. It has been test-built against that project but not yet run on a board.
 
 | File | What it does |
 |---|---|
 | `clock.c/.h` | TIM6 stat timer (1 tick per second) and `clock_millis()` (wraps `HAL_GetTick()`) |
-| `pet_state.c/.h` | States: Idle, Feed, Action A, Action B, Dead. Hunger and happiness stats |
+| `pet_state.c/.h` | States: Idle, Feed, Play, Sleep, Dead. Hunger, happiness and energy stats |
 | `pet_anim.c/.h` | Calls the matching LCD animation for whichever state the pet is in |
 
 ## Adding it to the project
@@ -54,12 +54,14 @@ Call these from anywhere, including interrupts:
 
 ```c
 pet_request(PET_EVENT_FEED);
-pet_request(PET_EVENT_ACTION_A);   // rename once the action is decided
-pet_request(PET_EVENT_ACTION_B);
-pet_request(PET_EVENT_RESET);      // start a new pet after death
+pet_request(PET_EVENT_PLAY);    // ignored if energy is below 15 (too tired)
+pet_request(PET_EVENT_SLEEP);   // e.g. light sensor reads dark
+pet_request(PET_EVENT_WAKE);    // e.g. light sensor reads bright
+pet_request(PET_EVENT_RESET);   // start a new pet after death
 ```
 
-Requests made while the pet is busy with a feed or action (2 seconds) are ignored.
+- Feed and Play only work from Idle. Requests made during them (2 s and 3 s) are ignored.
+- While the pet is asleep, only Wake does anything.
 
 ## Animations (for the LCD code)
 
@@ -69,27 +71,33 @@ Each state calls one function with a frame number:
 |---|---|
 | Idle | `anim_idle(frame)` |
 | Feed | `anim_feed(frame)` |
-| Action A | `anim_action_a(frame)` |
-| Action B | `anim_action_b(frame)` |
+| Play | `anim_play(frame)` |
+| Sleep | `anim_sleep(frame)` |
 | Dead | `anim_dead(frame)` |
 
 - `frame == 0` means the state was just entered: clear the area and draw the first frame.
 - After that, the function is called with frame 1, 2, 3… every 100 ms (`PET_ANIM_FRAME_MS`).
 - For a 4-frame sprite sheet such as IDLE MONKEY.png, draw sprite `frame % 4`. If it should animate slower than every 100 ms, use `(frame / 2) % 4`.
 - Draw one frame and return quickly.
-- `pet_get_stats()` gives hunger and happiness, for example to show a sad idle animation.
+- `pet_get_stats()` gives hunger, happiness and energy, for example to show a sad or sleepy idle animation.
 
 To connect the real animations, either write functions with these exact names (they automatically replace the empty placeholders), or put your own function names in the `state_anims` table in `pet_anim.c`.
 
 ## Stats
 
-Both stats run from 0 to 100. All of the numbers below are `#define`s at the top of `pet_state.c`.
+All stats run from 0 to 100. All of the numbers below are `#define`s at the top of `pet_state.c`.
 
-| Stat | Meaning | Change over time |
-|---|---|---|
-| Hunger | 0 = full, 100 = starving | +1 every 5 s |
-| Happiness | 100 = happy, 0 = miserable | -1 every 8 s, twice as fast when hunger is above 70 |
+| Stat | Meaning | Awake | Asleep |
+|---|---|---|---|
+| Hunger | 0 = full, 100 = starving | +1 every 5 s | +1 every 10 s |
+| Happiness | 100 = happy, 0 = miserable | -1 every 8 s, faster if hungry (above 70) or tired (energy below 20) | doesn't change |
+| Energy | 100 = rested, 0 = exhausted | -1 every 10 s | +1 every 2 s |
 
-- **Feeding:** hunger -25, happiness +5. Feeding while already full costs 10 happiness instead.
-- **Actions A and B:** happiness +15 each (placeholders until the actions are decided).
-- **Death:** the pet dies when hunger reaches 100 or happiness reaches 0.
+| Action | Effect |
+|---|---|
+| Feed | hunger -25, happiness +5. Feeding while already full costs 10 happiness instead |
+| Play | happiness +20, energy -15, hunger +5. Needs at least 15 energy |
+| Sleep | runs until energy reaches 100 or a Wake request comes in. Waking it early with energy below 30 costs 5 happiness |
+
+- If energy hits 0, the pet falls asleep on its own.
+- The pet dies when hunger reaches 100 or happiness reaches 0.

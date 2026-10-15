@@ -30,8 +30,8 @@ typedef void (*PetAnimFn)(uint32_t frame);
 /* Placeholder animations (weak, do nothing). Override or replace in the table. */
 void anim_idle(uint32_t frame);
 void anim_feed(uint32_t frame);
-void anim_action_a(uint32_t frame);
-void anim_action_b(uint32_t frame);
+void anim_play(uint32_t frame);
+void anim_sleep(uint32_t frame);
 void anim_dead(uint32_t frame);
 
 /* Called by pet_state.c. Not needed elsewhere. */
