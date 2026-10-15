@@ -212,11 +212,11 @@ static void draw_menu(PetState state)
                 message = "FEEDING...";
                 break;
 
-            case PET_STATE_ACTION_A:
+            case PET_STATE_PLAY:
                 message = "PLAYING...";
                 break;
 
-            case PET_STATE_ACTION_B:
+            case PET_STATE_SLEEP:
                 message = "RESTING...";
                 break;
 
@@ -335,10 +335,10 @@ static const SpriteSheet *get_sprite(PetState state)
         case PET_STATE_FEED:
             return &sprite_feed;
 
-        case PET_STATE_ACTION_A:
+        case PET_STATE_PLAY:
             return &sprite_action_a;
 
-        case PET_STATE_ACTION_B:
+        case PET_STATE_SLEEP:
             return &sprite_action_b;
 
         case PET_STATE_DEAD:
@@ -405,7 +405,7 @@ static void draw_animation(
 
     /* PLAY: monkey jumps left and right */
 
-    if (state == PET_STATE_ACTION_A)
+    if (state == PET_STATE_PLAY)
     {
         if (step % 2 == 0)
         {
@@ -433,7 +433,7 @@ static void draw_animation(
 
     /* REST: monkey stays low and snoozes */
 
-    if (state == PET_STATE_ACTION_B)
+    if (state == PET_STATE_SLEEP)
     {
         y = 122;
 
@@ -494,14 +494,14 @@ void anim_feed(uint32_t frame)
     render_state(PET_STATE_FEED, frame);
 }
 
-void anim_action_a(uint32_t frame)
+void anim_play(uint32_t frame)
 {
-    render_state(PET_STATE_ACTION_A, frame);
+    render_state(PET_STATE_PLAY, frame);
 }
 
-void anim_action_b(uint32_t frame)
+void anim_sleep(uint32_t frame)
 {
-    render_state(PET_STATE_ACTION_B, frame);
+    render_state(PET_STATE_SLEEP, frame);
 }
 
 void anim_dead(uint32_t frame)
@@ -608,11 +608,11 @@ void ui_joystick_event(uint8_t joystick)
                 break;
 
             case 1:
-                pet_request(PET_EVENT_ACTION_A);
+                pet_request(PET_EVENT_PLAY);
                 break;
 
             case 2:
-                pet_request(PET_EVENT_ACTION_B);
+                pet_request(PET_EVENT_SLEEP);
                 break;
 
             default:
