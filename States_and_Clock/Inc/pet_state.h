@@ -11,7 +11,7 @@
  *
  * Stats are 0..PET_STAT_MAX:
  *   hunger:    0 = full,      PET_STAT_MAX = starving (pet dies)
- *   happiness: 0 = miserable (pet dies), PET_STAT_MAX = very happy
+ *   happiness: 0 = miserable (pet leaves), PET_STAT_MAX = very happy
  *   energy:    0 = exhausted (pet falls asleep), PET_STAT_MAX = fully rested
  ******************************************************************************
  */
@@ -29,7 +29,8 @@ typedef enum
     PET_STATE_FEED,
     PET_STATE_PLAY,
     PET_STATE_SLEEP,
-    PET_STATE_DEAD,
+    PET_STATE_DEAD,       /* starved */
+    PET_STATE_LEAVE,      /* so unhappy it ran away */
     PET_STATE_COUNT
 } PetState;
 
@@ -40,7 +41,7 @@ typedef enum
     PET_EVENT_PLAY,       /* ignored if the pet is too tired */
     PET_EVENT_SLEEP,      /* e.g. lights off */
     PET_EVENT_WAKE,       /* e.g. lights on */
-    PET_EVENT_RESET       /* revive / start a new pet from the dead state */
+    PET_EVENT_RESET       /* start a new pet after it died or left */
 } PetEvent;
 
 typedef struct

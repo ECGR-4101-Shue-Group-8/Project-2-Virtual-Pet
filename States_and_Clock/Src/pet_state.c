@@ -107,6 +107,7 @@ static void enter_state(PetState next)
     case PET_STATE_IDLE:
     case PET_STATE_SLEEP:
     case PET_STATE_DEAD:
+    case PET_STATE_LEAVE:
     default:
         break;
     }
@@ -114,7 +115,7 @@ static void enter_state(PetState next)
     pet_anim_start(next);
 }
 
-/* Runs once per stat tick (1 s) in every state except dead. */
+/* Runs once per stat tick (1 s) while the pet is still around. */
 static void stats_tick(void)
 {
     bool asleep = (state == PET_STATE_SLEEP);
@@ -151,9 +152,10 @@ static void stats_tick(void)
     }
 }
 
-static bool is_dying(void)
+/* Dead and left are both game over: stats freeze until a reset. */
+static bool is_gone(void)
 {
-    return (stats.hunger >= PET_STAT_MAX) || (stats.happiness == 0U);
+    return (state == PET_STATE_DEAD) || (state == PET_STATE_LEAVE);
 }
 
 /* ---------------------------------------------------------------- API --- */
@@ -190,16 +192,22 @@ PetStats pet_get_stats(void)
 
 void pet_update(void)
 {
-    if (state != PET_STATE_DEAD)
+    if (!is_gone())
     {
         while (clock_stat_tick_pending())
         {
             stats_tick();
         }
 
-        if (is_dying())
+        /* Starving takes priority over leaving. */
+        if (stats.hunger >= PET_STAT_MAX)
         {
             enter_state(PET_STATE_DEAD);
+            return;
+        }
+        if (stats.happiness == 0U)
+        {
+            enter_state(PET_STATE_LEAVE);
             return;
         }
     }
@@ -252,6 +260,7 @@ void pet_update(void)
         break;
 
     case PET_STATE_DEAD:
+    case PET_STATE_LEAVE:
         if (event == PET_EVENT_RESET)
         {
             pet_init();

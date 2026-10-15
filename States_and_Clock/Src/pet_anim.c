@@ -15,6 +15,7 @@ static const PetAnimFn state_anims[PET_STATE_COUNT] =
     [PET_STATE_PLAY]     = anim_play,
     [PET_STATE_SLEEP]    = anim_sleep,
     [PET_STATE_DEAD]     = anim_dead,
+    [PET_STATE_LEAVE]    = anim_leave,
 };
 
 static uint32_t current_frame;
@@ -25,6 +26,7 @@ __attribute__((weak)) void anim_feed(uint32_t frame)     { (void)frame; }
 __attribute__((weak)) void anim_play(uint32_t frame)     { (void)frame; }
 __attribute__((weak)) void anim_sleep(uint32_t frame)    { (void)frame; }
 __attribute__((weak)) void anim_dead(uint32_t frame)     { (void)frame; }
+__attribute__((weak)) void anim_leave(uint32_t frame)    { (void)frame; }
 
 static void play_frame(PetState state, uint32_t frame)
 {

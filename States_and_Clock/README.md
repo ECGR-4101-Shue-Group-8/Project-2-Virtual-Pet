@@ -5,7 +5,7 @@ Pet state machine, hunger/happiness/energy stats, the 1 Hz stat timer, and the h
 | File | What it does |
 |---|---|
 | `clock.c/.h` | TIM6 stat timer (1 tick per second) and `clock_millis()` (wraps `HAL_GetTick()`) |
-| `pet_state.c/.h` | States: Idle, Feed, Play, Sleep, Dead. Hunger, happiness and energy stats |
+| `pet_state.c/.h` | States: Idle, Feed, Play, Sleep, Dead, Leave. Hunger, happiness and energy stats |
 | `pet_anim.c/.h` | Calls the matching LCD animation for whichever state the pet is in |
 
 ## Adding it to the project
@@ -57,7 +57,7 @@ pet_request(PET_EVENT_FEED);
 pet_request(PET_EVENT_PLAY);    // ignored if energy is below 15 (too tired)
 pet_request(PET_EVENT_SLEEP);   // e.g. light sensor reads dark
 pet_request(PET_EVENT_WAKE);    // e.g. light sensor reads bright
-pet_request(PET_EVENT_RESET);   // start a new pet after death
+pet_request(PET_EVENT_RESET);   // start a new pet after it died or left
 ```
 
 - Feed and Play only work from Idle. Requests made during them (2 s and 3 s) are ignored.
@@ -74,10 +74,12 @@ Each state calls one function with a frame number:
 | Play | `anim_play(frame)` |
 | Sleep | `anim_sleep(frame)` |
 | Dead | `anim_dead(frame)` |
+| Leave | `anim_leave(frame)` |
 
 - `frame == 0` means the state was just entered: clear the area and draw the first frame.
 - After that, the function is called with frame 1, 2, 3… every 100 ms (`PET_ANIM_FRAME_MS`).
-- For a 4-frame sprite sheet such as IDLE MONKEY.png, draw sprite `frame % 4`. If it should animate slower than every 100 ms, use `(frame / 2) % 4`.
+- `anim_leave` should play LEAVE MONKEY.png once (frames 0-3), then leave the pet off screen. For example, use `frame < 4 ? frame : 3` for the sprite, or clear the screen after frame 3.
+- For a looping 4-frame sprite sheet such as IDLE MONKEY.png, draw sprite `frame % 4`. If it should animate slower than every 100 ms, use `(frame / 2) % 4`.
 - Draw one frame and return quickly.
 - `pet_get_stats()` gives hunger, happiness and energy, for example to show a sad or sleepy idle animation.
 
@@ -90,7 +92,7 @@ All stats run from 0 to 100. All of the numbers below are `#define`s at the top 
 | Stat | Meaning | Awake | Asleep |
 |---|---|---|---|
 | Hunger | 0 = full, 100 = starving | +1 every 5 s | +1 every 10 s |
-| Happiness | 100 = happy, 0 = miserable | -1 every 8 s, faster if hungry (above 70) or tired (energy below 20) | doesn't change |
+| Happiness | 100 = happy, 0 = miserable (pet leaves) | -1 every 8 s, faster if hungry (above 70) or tired (energy below 20) | doesn't change |
 | Energy | 100 = rested, 0 = exhausted | -1 every 10 s | +1 every 2 s |
 
 | Action | Effect |
@@ -100,4 +102,6 @@ All stats run from 0 to 100. All of the numbers below are `#define`s at the top 
 | Sleep | runs until energy reaches 100 or a Wake request comes in. Waking it early with energy below 30 costs 5 happiness |
 
 - If energy hits 0, the pet falls asleep on its own.
-- The pet dies when hunger reaches 100 or happiness reaches 0.
+- The pet dies (Dead) when hunger reaches 100.
+- The pet runs away (Leave) when happiness reaches 0. If both happen at once, Dead wins.
+- After Dead or Leave, stats stop changing until a Reset starts a new pet.
