@@ -44,7 +44,23 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
+
+    # Pet state machine
+    Core/Src/clock.c
+    Core/Src/pet_state.c
+    Core/Src/pet_anim.c
+
+    # Display and GUI
+    Core/Src/display.c
+    Core/Src/sprites.c
+    Core/Src/ui.c
+
+    # Generated sprite data
+    Core/Src/idle_pixels.c
+    Core/Src/feed_pixels.c
+    Core/Src/runaway_pixels.c
+    Core/Src/dead_pixels.c
+
 )
 
 # Add include paths
