@@ -3,63 +3,73 @@ import sys
 
 
 def rgb888_to_rgb565(r, g, b):
-    r5 = (r >> 3) & 0x1F
-    g6 = (g >> 2) & 0x3F
-    b5 = (b >> 3) & 0x1F
+    return (
+        ((r >> 3) << 11)
+        | ((g >> 2) << 5)
+        | (b >> 3)
+    )
 
-    return (r5 << 11) | (g6 << 5) | b5
 
+def convert_sprite_sheet(
+    input_file,
+    output_file,
+    array_name,
+    columns,
+    rows
+):
+    original = Image.open(input_file).convert("RGBA")
 
-def convert_sprite_sheet(input_file, output_file):
-    image = Image.open(input_file).convert("RGB")
+    # Flatten transparency onto a black background.
+    background = Image.new(
+        "RGBA",
+        original.size,
+        (0, 0, 0, 255)
+    )
+
+    background.alpha_composite(original)
+
+    image = background.convert("RGB")
 
     width, height = image.size
 
-    # Our Piskel sheets are 4 frames in one horizontal row.
-    frame_count = 4
+    if width % columns != 0:
+        raise ValueError("Width is not divisible by columns")
 
-    if width % frame_count != 0:
-        raise ValueError("Image width must be divisible by 4.")
+    if height % rows != 0:
+        raise ValueError("Height is not divisible by rows")
 
-    frame_width = width // frame_count
-    frame_height = height
-
-    print(f"Image: {width}x{height}")
-    print(f"Frames: {frame_count}")
-    print(f"Frame size: {frame_width}x{frame_height}")
+    frame_width = width // columns
+    frame_height = height // rows
+    frame_count = columns * rows
 
     pixels = []
 
-      # Store each frame contiguously:
-    #
-    # frame 0 pixels
-    # frame 1 pixels
-    # frame 2 pixels
-    # frame 3 pixels
-    #
-    # This makes the STM32 code much simpler than storing
-    # the original 4x1 image layout.
-    
-    for frame in range(frame_count):
+    # Store complete frames consecutively.
+    for frame_row in range(rows):
+        for frame_col in range(columns):
 
-        start_x = frame * frame_width
+            start_x = frame_col * frame_width
+            start_y = frame_row * frame_height
 
-        for y in range(frame_height):
-            for x in range(frame_width):
+            for y in range(frame_height):
+                for x in range(frame_width):
 
-                r, g, b = image.getpixel((start_x + x, y))
+                    r, g, b = image.getpixel(
+                        (start_x + x, start_y + y)
+                    )
 
-                pixels.append(rgb888_to_rgb565(r, g, b))
+                    pixels.append(
+                        rgb888_to_rgb565(r, g, b)
+                    )
 
     with open(output_file, "w") as f:
+        f.write("#include <stdint.h>\n\n")
 
-        f.write('#include <stdint.h>\n\n')
-
-        f.write("const uint16_t idle_pixels[] =\n")
-        f.write("{\n")
+        f.write(
+            f"const uint16_t {array_name}[] = {{\n"
+        )
 
         for i, pixel in enumerate(pixels):
-
             f.write(f"0x{pixel:04X}")
 
             if i != len(pixels) - 1:
@@ -72,20 +82,26 @@ def convert_sprite_sheet(input_file, output_file):
 
         f.write("\n};\n")
 
-    print(f"Wrote {len(pixels)} RGB565 pixels.")
-    print(f"Output: {output_file}")
+    print(f"Frames: {frame_count}")
+    print(f"Frame size: {frame_width}x{frame_height}")
+    print(f"Total pixels: {len(pixels)}")
+    print(f"Generated: {output_file}")
 
 
 if __name__ == "__main__":
 
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 6:
         print(
             "Usage: python png_to_rgb565.py "
-            "<input.png> <output.c>"
+            "<input.png> <output.c> "
+            "<array_name> <columns> <rows>"
         )
         sys.exit(1)
 
     convert_sprite_sheet(
         sys.argv[1],
-        sys.argv[2]
+        sys.argv[2],
+        sys.argv[3],
+        int(sys.argv[4]),
+        int(sys.argv[5])
     )
