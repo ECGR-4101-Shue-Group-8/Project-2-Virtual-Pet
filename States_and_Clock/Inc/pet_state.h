@@ -11,7 +11,7 @@
  *
  * Stats are 0..PET_STAT_MAX:
  *   hunger:    0 = full,      PET_STAT_MAX = starving (pet dies)
- *   happiness: 0 = miserable (pet leaves), PET_STAT_MAX = very happy
+ *   happiness: 0 = miserable (pet runs away), PET_STAT_MAX = very happy
  *   energy:    0 = exhausted (pet falls asleep), PET_STAT_MAX = fully rested
  ******************************************************************************
  */
@@ -30,7 +30,7 @@ typedef enum
     PET_STATE_PLAY,
     PET_STATE_SLEEP,
     PET_STATE_DEAD,       /* starved */
-    PET_STATE_LEAVE,      /* so unhappy it ran away */
+    PET_STATE_RUNAWAY,    /* so unhappy it ran away */
     PET_STATE_COUNT
 } PetState;
 

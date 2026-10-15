@@ -5,7 +5,7 @@ Pet state machine, hunger/happiness/energy stats, the 1 Hz stat timer, and the h
 | File | What it does |
 |---|---|
 | `clock.c/.h` | TIM6 stat timer (1 tick per second) and `clock_millis()` (wraps `HAL_GetTick()`) |
-| `pet_state.c/.h` | States: Idle, Feed, Play, Sleep, Dead, Leave. Hunger, happiness and energy stats |
+| `pet_state.c/.h` | States: Idle, Feed, Play, Sleep, Dead, Runaway. Hunger, happiness and energy stats |
 | `pet_anim.c/.h` | Calls the matching LCD animation for whichever state the pet is in |
 
 ## Adding it to the project
@@ -74,12 +74,12 @@ Each state calls one function with a frame number:
 | Play | `anim_play(frame)` |
 | Sleep | `anim_sleep(frame)` |
 | Dead | `anim_dead(frame)` |
-| Leave | `anim_leave(frame)` |
+| Runaway | `anim_runaway(frame)` |
 
 - `frame == 0` means the state was just entered: clear the area and draw the first frame.
 - After that, the function is called with frame 1, 2, 3… every 100 ms (`PET_ANIM_FRAME_MS`).
-- `anim_leave` should play LEAVE MONKEY.png once (frames 0-3), then leave the pet off screen. For example, use `frame < 4 ? frame : 3` for the sprite, or clear the screen after frame 3.
-- For a looping 4-frame sprite sheet such as IDLE MONKEY.png, draw sprite `frame % 4`. If it should animate slower than every 100 ms, use `(frame / 2) % 4`.
+- `anim_runaway` should play RUNAWAY_MONKEY.png once (frames 0-3), then leave the pet off screen. For example, use `frame < 4 ? frame : 3` for the sprite, or clear the screen after frame 3.
+- For a looping 4-frame sprite sheet such as IDLE_MONKEY.png, draw sprite `frame % 4`. If it should animate slower than every 100 ms, use `(frame / 2) % 4`.
 - Draw one frame and return quickly.
 - `pet_get_stats()` gives hunger, happiness and energy, for example to show a sad or sleepy idle animation.
 
@@ -92,7 +92,7 @@ All stats run from 0 to 100. All of the numbers below are `#define`s at the top 
 | Stat | Meaning | Awake | Asleep |
 |---|---|---|---|
 | Hunger | 0 = full, 100 = starving | +1 every 5 s | +1 every 10 s |
-| Happiness | 100 = happy, 0 = miserable (pet leaves) | -1 every 8 s, faster if hungry (above 70) or tired (energy below 20) | doesn't change |
+| Happiness | 100 = happy, 0 = miserable (pet runs away) | -1 every 8 s, faster if hungry (above 70) or tired (energy below 20) | doesn't change |
 | Energy | 100 = rested, 0 = exhausted | -1 every 10 s | +1 every 2 s |
 
 | Action | Effect |
@@ -103,5 +103,5 @@ All stats run from 0 to 100. All of the numbers below are `#define`s at the top 
 
 - If energy hits 0, the pet falls asleep on its own.
 - The pet dies (Dead) when hunger reaches 100.
-- The pet runs away (Leave) when happiness reaches 0. If both happen at once, Dead wins.
-- After Dead or Leave, stats stop changing until a Reset starts a new pet.
+- The pet runs away (Runaway) when happiness reaches 0. If both happen at once, Dead wins.
+- After Dead or Runaway, stats stop changing until a Reset starts a new pet.

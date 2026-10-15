@@ -107,7 +107,7 @@ static void enter_state(PetState next)
     case PET_STATE_IDLE:
     case PET_STATE_SLEEP:
     case PET_STATE_DEAD:
-    case PET_STATE_LEAVE:
+    case PET_STATE_RUNAWAY:
     default:
         break;
     }
@@ -155,7 +155,7 @@ static void stats_tick(void)
 /* Dead and left are both game over: stats freeze until a reset. */
 static bool is_gone(void)
 {
-    return (state == PET_STATE_DEAD) || (state == PET_STATE_LEAVE);
+    return (state == PET_STATE_DEAD) || (state == PET_STATE_RUNAWAY);
 }
 
 /* ---------------------------------------------------------------- API --- */
@@ -207,7 +207,7 @@ void pet_update(void)
         }
         if (stats.happiness == 0U)
         {
-            enter_state(PET_STATE_LEAVE);
+            enter_state(PET_STATE_RUNAWAY);
             return;
         }
     }
@@ -260,7 +260,7 @@ void pet_update(void)
         break;
 
     case PET_STATE_DEAD:
-    case PET_STATE_LEAVE:
+    case PET_STATE_RUNAWAY:
         if (event == PET_EVENT_RESET)
         {
             pet_init();
