@@ -1,4 +1,4 @@
-# 🐒 Monkey Pal — Virtual Pet
+# Monkey Pal — Virtual Pet
 
 **ECGR 4101: Advanced Embedded Systems**  
 **UNC Charlotte | Group 8 | Project 2**
@@ -6,8 +6,6 @@
 ## Overview
 
 Monkey Pal is a Tamagotchi-style virtual pet developed using an STM32 microcontroller and TFT LCD. Players interact with an animated monkey while managing its hunger and happiness through different activities.
-
-The project demonstrates embedded systems concepts including finite state machines, hardware timers, interrupt-driven scheduling, graphical user interfaces, SPI communication, sprite animation, and peripheral integration.
 
 **Repository:** [Project-2-Virtual-Pet](https://github.com/ECGR-4101-Shue-Group-8/Project-2-Virtual-Pet)
 
