@@ -379,14 +379,5 @@ Individual contributions and development progress are documented through GitHub 
 
 ## AI Tools
 
-VsCode Copilot and ChatGPT was used to assist with software organization, code development suggestions, STM32 integration, and documentation. All generated code is subject to team review and testing.
+VsCode Copilot, ChatGPT, and ClaudeCode was used to assist with software organization, code development suggestions, STM32 integration, and documentation. All generated code is subject to team review and testing.
 
-## Course Information
-
-**University:** University of North Carolina at Charlotte  
-**Course:** ECGR 4101 — Advanced Embedded Systems  
-**Project:** Project 2 — Virtual Pet  
-**Team:** Group 8
-
-Core/Src/dead_pixels.c \
-dead_pixels 1 1
