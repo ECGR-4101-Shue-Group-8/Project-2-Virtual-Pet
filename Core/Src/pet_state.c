@@ -8,6 +8,7 @@
 #include "pet_state.h"
 #include "clock.h"
 #include "pet_anim.h"
+#include "peripherals.h"
 
 /* ------------------------------------------------------------- tuning --- */
 #define START_HUNGER            20U
@@ -21,8 +22,16 @@
 #define FEED_HAPPINESS          5U    /* happiness gained per feeding       */
 #define OVERFEED_PENALTY        10U   /* happiness lost if fed while full   */
 
-#define PLAY_HAPPINESS          15U   /* TODO: tune once play is finalized  */
-#define CHECK_TEMP_HAPPINESS    15U   /* TODO: tune once check temp is final */
+/* Play (sound sensor): happiness for making a sound vs. staying silent. */
+#define PLAY_HEARD_HAPPINESS    20U
+#define PLAY_QUIET_HAPPINESS    5U
+
+/* Check temp (DHT11): comfortable range and the effect of each outcome. */
+#define TEMP_MIN_C              18U
+#define TEMP_MAX_C              28U
+#define TEMP_OK_HAPPINESS       15U
+#define TEMP_BAD_HAPPINESS      5U
+#define TEMP_HOT_HUNGER         5U    /* a hot pet gets thirsty/hungry      */
 
 #define ACTION_DURATION_MS      2000U /* time spent in feed/action states   */
 
@@ -34,6 +43,9 @@ static uint32_t hunger_timer_s;
 static uint32_t happiness_timer_s;
 
 static volatile PetEvent pending_event;
+
+static uint8_t sound_heard;
+static PetClimate climate;
 
 /* ------------------------------------------------------------ helpers --- */
 static uint8_t stat_add(uint8_t value, uint8_t amount)
@@ -75,13 +87,27 @@ static void enter_state(PetState next)
         break;
 
     case PET_STATE_PLAY:
-        /* TODO: start sound-sensor play interaction here */
-        stats.happiness = stat_add(stats.happiness, PLAY_HAPPINESS);
+        sound_heard = 0U;
+        stats.happiness = stat_add(stats.happiness, PLAY_QUIET_HAPPINESS);
         break;
 
     case PET_STATE_CHECK_TEMP:
-        /* TODO: read the DHT11 here */
-        stats.happiness = stat_add(stats.happiness, CHECK_TEMP_HAPPINESS);
+        climate.valid = (DHT11_Read(&climate.humidity, &climate.temperature) == 0);
+        if (climate.valid &&
+            climate.temperature >= TEMP_MIN_C &&
+            climate.temperature <= TEMP_MAX_C)
+        {
+            stats.happiness = stat_add(stats.happiness, TEMP_OK_HAPPINESS);
+            Speaker_PlayChime();
+        }
+        else
+        {
+            stats.happiness = stat_add(stats.happiness, TEMP_BAD_HAPPINESS);
+            if (climate.valid && climate.temperature > TEMP_MAX_C)
+            {
+                stats.hunger = stat_add(stats.hunger, TEMP_HOT_HUNGER);
+            }
+        }
         break;
 
     case PET_STATE_IDLE:
@@ -150,6 +176,16 @@ PetStats pet_get_stats(void)
     return stats;
 }
 
+PetClimate pet_get_climate(void)
+{
+    return climate;
+}
+
+uint8_t pet_sound_heard(void)
+{
+    return sound_heard;
+}
+
 void pet_update(void)
 {
     if (state != PET_STATE_DEAD &&
@@ -189,8 +225,17 @@ void pet_update(void)
         else if (event == PET_EVENT_CHECK_TEMP) { enter_state(PET_STATE_CHECK_TEMP); }
         break;
 
-    case PET_STATE_FEED:
     case PET_STATE_PLAY:
+        /* The first sound heard while playing earns the bonus and a chime. */
+        if (!sound_heard && SoundSensor_Active())
+        {
+            sound_heard = 1U;
+            stats.happiness = stat_add(stats.happiness,
+                                       PLAY_HEARD_HAPPINESS - PLAY_QUIET_HAPPINESS);
+            Speaker_PlayChime();
+        }
+        /* fall through */
+    case PET_STATE_FEED:
     case PET_STATE_CHECK_TEMP:
         /* Busy: requests made during an action are dropped. */
         if ((clock_millis() - state_entered_ms) >= ACTION_DURATION_MS)

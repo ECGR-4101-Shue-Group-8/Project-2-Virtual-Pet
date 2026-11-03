@@ -109,8 +109,8 @@ It was developed for the HAL/CubeMX project in `Lab1_NUCLEO_L496.zip`.
 |---|---|
 | Idle | Default state; the pet waits for interactions |
 | Feed | Plays feeding animation and modifies statistics |
-| Play | Sound-sensor interaction (planned) |
-| Check Temp | DHT11 temperature check (planned) |
+| Play | Sound sensor (PF15): making a sound during the action earns a bonus and a speaker chime |
+| Check Temp | DHT11 (PF13) reading shown on screen; effect depends on temperature; chime when comfortable |
 | Dead | Terminal state when the pet's needs are neglected |
 | Runaway | Additional terminal behavior requiring integration/verification |
 
@@ -148,10 +148,10 @@ When hunger exceeds 70, happiness decreases twice as fast.
 |---|---|---|
 | Feed | −25 | +5 |
 | Feed while already full | No reduction | −10 |
-| Play | — | +15 |
-| Check Temp | — | +15 |
+| Play | — | +5, or +20 if the sound sensor hears a sound |
+| Check Temp | — | +15 at 18-28 C, otherwise +5 (hunger +5 if hotter than 28 C) |
 
-Play and Check Temp currently only add happiness; their sensor behavior and dedicated animations are not implemented yet.
+Play and Check Temp use the sound sensor (PF15), DHT11 (PF13) and Grove speaker (PE0), ported from the Komaeda lab into `peripherals.c`. They have not been tested on hardware, and their dedicated animations are not implemented yet.
 
 All statistic changes are clamped to the 0–100 range.
 

@@ -20,6 +20,7 @@
 #include "gfx01m2_conf.h"
 #include "clock.h"
 #include "pet_state.h"
+#include "peripherals.h"
 #include "ui.h"
 
 /* Private variables ---------------------------------------------------------*/
@@ -72,6 +73,8 @@ int main(void)
     /* Initialize display */
 
     ILI9341_Init(&hspi1);
+
+    Peripherals_Init();
 
     /* Initialize virtual pet subsystems */
 

@@ -428,19 +428,42 @@ static void draw_animation(
             9, 9,
             ILI9341_COLOR_ORANGE
         );
+
+        /* "?" while waiting for a sound, "!!" once the sound sensor heard one */
+
+        ILI9341_DrawString(
+            150, 105,
+            pet_sound_heard() ? "!!" : "? ",
+            ILI9341_COLOR_ORANGE,
+            COLOR_BG,
+            1
+        );
     }
 
 
-    /* CHECK TEMP: placeholder visuals (monkey stays low, "Zz") until the animation exists */
+    /* CHECK TEMP: monkey stays low and the DHT11 reading is shown */
 
     if (state == PET_STATE_CHECK_TEMP)
     {
+        char text[20];
+        PetClimate climate = pet_get_climate();
+
         y = 122;
 
+        if (climate.valid)
+        {
+            snprintf(text, sizeof(text), "%uC %u%%",
+                     (unsigned)climate.temperature,
+                     (unsigned)climate.humidity);
+        }
+        else
+        {
+            snprintf(text, sizeof(text), "NO SENSOR");
+        }
+
         ILI9341_DrawString(
-            (step % 2 == 0) ? 150 : 158,
-            (step % 2 == 0) ? 105 : 112,
-            "Zz",
+            70, 105,
+            text,
             ILI9341_COLOR_CYAN,
             COLOR_BG,
             1

@@ -49,10 +49,19 @@ typedef struct
     uint32_t age_s;       /* seconds alive */
 } PetStats;
 
+typedef struct
+{
+    uint8_t temperature;  /* degrees C */
+    uint8_t humidity;     /* %RH */
+    uint8_t valid;        /* last DHT11 read succeeded */
+} PetClimate;
+
 void     pet_init(void);
 void     pet_update(void);
 void     pet_request(PetEvent event);
 PetState pet_get_state(void);
 PetStats pet_get_stats(void);
+PetClimate pet_get_climate(void);   /* reading taken when Check Temp started */
+uint8_t  pet_sound_heard(void);     /* 1 if a sound was heard during Play */
 
 #endif /* PET_STATE_H */
