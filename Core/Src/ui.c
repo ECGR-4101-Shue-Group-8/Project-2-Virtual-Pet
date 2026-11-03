@@ -45,7 +45,7 @@ static const char *menu_options[MENU_COUNT] =
 {
     "FEED",
     "PLAY",
-    "REST"
+    "CHECK TEMP"
 };
 
 
@@ -212,12 +212,12 @@ static void draw_menu(PetState state)
                 message = "FEEDING...";
                 break;
 
-            case PET_STATE_ACTION_A:
+            case PET_STATE_PLAY:
                 message = "PLAYING...";
                 break;
 
-            case PET_STATE_ACTION_B:
-                message = "RESTING...";
+            case PET_STATE_CHECK_TEMP:
+                message = "CHECKING TEMP...";
                 break;
 
             default:
@@ -335,11 +335,11 @@ static const SpriteSheet *get_sprite(PetState state)
         case PET_STATE_FEED:
             return &sprite_feed;
 
-        case PET_STATE_ACTION_A:
-            return &sprite_action_a;
+        case PET_STATE_PLAY:
+            return &sprite_play;
 
-        case PET_STATE_ACTION_B:
-            return &sprite_action_b;
+        case PET_STATE_CHECK_TEMP:
+            return &sprite_check_temp;
 
         case PET_STATE_DEAD:
             return &sprite_dead;
@@ -405,7 +405,7 @@ static void draw_animation(
 
     /* PLAY: monkey jumps left and right */
 
-    if (state == PET_STATE_ACTION_A)
+    if (state == PET_STATE_PLAY)
     {
         if (step % 2 == 0)
         {
@@ -428,19 +428,42 @@ static void draw_animation(
             9, 9,
             ILI9341_COLOR_ORANGE
         );
+
+        /* "?" while waiting for a sound, "!!" once the sound sensor heard one */
+
+        ILI9341_DrawString(
+            150, 105,
+            pet_sound_heard() ? "!!" : "? ",
+            ILI9341_COLOR_ORANGE,
+            COLOR_BG,
+            1
+        );
     }
 
 
-    /* REST: monkey stays low and snoozes */
+    /* CHECK TEMP: monkey stays low and the DHT11 reading is shown */
 
-    if (state == PET_STATE_ACTION_B)
+    if (state == PET_STATE_CHECK_TEMP)
     {
+        char text[20];
+        PetClimate climate = pet_get_climate();
+
         y = 122;
 
+        if (climate.valid)
+        {
+            snprintf(text, sizeof(text), "%uC %u%%",
+                     (unsigned)climate.temperature,
+                     (unsigned)climate.humidity);
+        }
+        else
+        {
+            snprintf(text, sizeof(text), "NO SENSOR");
+        }
+
         ILI9341_DrawString(
-            (step % 2 == 0) ? 150 : 158,
-            (step % 2 == 0) ? 105 : 112,
-            "Zz",
+            70, 105,
+            text,
             ILI9341_COLOR_CYAN,
             COLOR_BG,
             1
@@ -494,14 +517,14 @@ void anim_feed(uint32_t frame)
     render_state(PET_STATE_FEED, frame);
 }
 
-void anim_action_a(uint32_t frame)
+void anim_play(uint32_t frame)
 {
-    render_state(PET_STATE_ACTION_A, frame);
+    render_state(PET_STATE_PLAY, frame);
 }
 
-void anim_action_b(uint32_t frame)
+void anim_check_temp(uint32_t frame)
 {
-    render_state(PET_STATE_ACTION_B, frame);
+    render_state(PET_STATE_CHECK_TEMP, frame);
 }
 
 void anim_dead(uint32_t frame)
@@ -608,11 +631,11 @@ void ui_joystick_event(uint8_t joystick)
                 break;
 
             case 1:
-                pet_request(PET_EVENT_ACTION_A);
+                pet_request(PET_EVENT_PLAY);
                 break;
 
             case 2:
-                pet_request(PET_EVENT_ACTION_B);
+                pet_request(PET_EVENT_CHECK_TEMP);
                 break;
 
             default:

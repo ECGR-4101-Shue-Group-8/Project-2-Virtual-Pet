@@ -18,8 +18,8 @@
 
 extern const uint16_t idle_pixels[];
 extern const uint16_t feed_pixels[];
-//extern const uint16_t action_a_pixels[];
-//extern const uint16_t action_b_pixels[];
+//extern const uint16_t play_pixels[];
+//extern const uint16_t check_temp_pixels[];
 extern const uint16_t runaway_pixels[];
 extern const uint16_t dead_pixels[];
 
@@ -47,7 +47,7 @@ const SpriteSheet sprite_feed =
 
 /* Play - temporarily uses idle artwork */
 
-const SpriteSheet sprite_action_a =
+const SpriteSheet sprite_play =
 {
     .pixels = idle_pixels,
     .frame_width = 64,
@@ -56,9 +56,9 @@ const SpriteSheet sprite_action_a =
 };
 
 
-/* Rest - temporarily uses idle artwork */
+/* Check temp - temporarily uses idle artwork */
 
-const SpriteSheet sprite_action_b =
+const SpriteSheet sprite_check_temp =
 {
     .pixels = idle_pixels,
     .frame_width = 64,

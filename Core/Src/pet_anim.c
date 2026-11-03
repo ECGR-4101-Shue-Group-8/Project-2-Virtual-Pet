@@ -12,8 +12,8 @@ static const PetAnimFn state_anims[PET_STATE_COUNT] =
 {
     [PET_STATE_IDLE]     = anim_idle,
     [PET_STATE_FEED]     = anim_feed,
-    [PET_STATE_ACTION_A] = anim_action_a,
-    [PET_STATE_ACTION_B] = anim_action_b,
+    [PET_STATE_PLAY]       = anim_play,
+    [PET_STATE_CHECK_TEMP] = anim_check_temp,
     [PET_STATE_RUNAWAY] = anim_runaway,
     [PET_STATE_DEAD]     = anim_dead,
 };
@@ -23,8 +23,8 @@ static uint32_t current_frame;
 /* Placeholders so the project builds before the LCD code exists. */
 __attribute__((weak)) void anim_idle(uint32_t frame)     { (void)frame; }
 __attribute__((weak)) void anim_feed(uint32_t frame)     { (void)frame; }
-__attribute__((weak)) void anim_action_a(uint32_t frame) { (void)frame; }
-__attribute__((weak)) void anim_action_b(uint32_t frame) { (void)frame; }
+__attribute__((weak)) void anim_play(uint32_t frame) { (void)frame; }
+__attribute__((weak)) void anim_check_temp(uint32_t frame) { (void)frame; }
 __attribute__((weak)) void anim_runaway(uint32_t frame)  { (void)frame; }
 __attribute__((weak)) void anim_dead(uint32_t frame)     { (void)frame; }
 
