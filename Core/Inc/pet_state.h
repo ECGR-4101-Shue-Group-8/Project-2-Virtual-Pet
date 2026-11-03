@@ -26,8 +26,8 @@ typedef enum
 {
     PET_STATE_IDLE = 0,
     PET_STATE_FEED,
-    PET_STATE_ACTION_A,   /* TODO: rename once the peripheral/action is decided */
-    PET_STATE_ACTION_B,   /* TODO: rename once the peripheral/action is decided */
+    PET_STATE_ACTION_A,   /* LISTEN: sound sensor + speaker */
+    PET_STATE_ACTION_B,   /* CLIMATE: DHT11 temperature/humidity + speaker */
     PET_STATE_DEAD,
     PET_STATE_RUNAWAY,
     PET_STATE_COUNT
@@ -49,10 +49,19 @@ typedef struct
     uint32_t age_s;       /* seconds alive */
 } PetStats;
 
+typedef struct
+{
+    uint8_t temperature;  /* degrees C */
+    uint8_t humidity;     /* %RH */
+    uint8_t valid;        /* last DHT11 read succeeded */
+} PetClimate;
+
 void     pet_init(void);
 void     pet_update(void);
 void     pet_request(PetEvent event);
 PetState pet_get_state(void);
 PetStats pet_get_stats(void);
+PetClimate pet_get_climate(void);   /* reading taken when Action B started */
+uint8_t  pet_sound_heard(void);     /* 1 if a sound was heard during Action A */
 
 #endif /* PET_STATE_H */

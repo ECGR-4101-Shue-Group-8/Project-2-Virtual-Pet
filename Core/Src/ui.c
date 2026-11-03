@@ -44,8 +44,8 @@ static int16_t previous_happiness = -1;
 static const char *menu_options[MENU_COUNT] =
 {
     "FEED",
-    "PLAY",
-    "REST"
+    "LISTEN",
+    "CLIMATE"
 };
 
 
@@ -213,11 +213,11 @@ static void draw_menu(PetState state)
                 break;
 
             case PET_STATE_ACTION_A:
-                message = "PLAYING...";
+                message = "LISTENING...";
                 break;
 
             case PET_STATE_ACTION_B:
-                message = "RESTING...";
+                message = "CHECKING TEMP...";
                 break;
 
             default:
@@ -403,7 +403,7 @@ static void draw_animation(
     );
 
 
-    /* PLAY: monkey jumps left and right */
+    /* LISTEN: monkey bounces; shows a note once the sound sensor hears something */
 
     if (state == PET_STATE_ACTION_A)
     {
@@ -418,29 +418,40 @@ static void draw_animation(
             y = 106;
         }
 
-        /* Moving ball */
-
-        uint16_t ball_x =
-            (step % 2 == 0) ? 155 : 75;
-
-        ILI9341_FillRect(
-            ball_x, 175,
-            9, 9,
-            ILI9341_COLOR_ORANGE
+        ILI9341_DrawString(
+            (step % 2 == 0) ? 150 : 158,
+            (step % 2 == 0) ? 105 : 112,
+            pet_sound_heard() ? "!!" : "?",
+            ILI9341_COLOR_ORANGE,
+            COLOR_BG,
+            1
         );
     }
 
 
-    /* REST: monkey stays low and snoozes */
+    /* CLIMATE: monkey stays still and shows the DHT11 reading */
 
     if (state == PET_STATE_ACTION_B)
     {
+        char text[20];
+        PetClimate climate = pet_get_climate();
+
         y = 122;
 
+        if (climate.valid)
+        {
+            snprintf(text, sizeof(text), "%uC %u%%",
+                     (unsigned)climate.temperature,
+                     (unsigned)climate.humidity);
+        }
+        else
+        {
+            snprintf(text, sizeof(text), "NO SENSOR");
+        }
+
         ILI9341_DrawString(
-            (step % 2 == 0) ? 150 : 158,
-            (step % 2 == 0) ? 105 : 112,
-            "Zz",
+            70, 105,
+            text,
             ILI9341_COLOR_CYAN,
             COLOR_BG,
             1
