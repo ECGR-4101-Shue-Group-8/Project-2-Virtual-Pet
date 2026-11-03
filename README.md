@@ -109,12 +109,12 @@ It was developed for the HAL/CubeMX project in `Lab1_NUCLEO_L496.zip`.
 |---|---|
 | Idle | Default state; the pet waits for interactions |
 | Feed | Plays feeding animation and modifies statistics |
-| Action A | First additional interaction |
-| Action B | Second additional interaction |
-| Dead | Terminal state when the pet's needs are neglected |
-| Runaway | Additional terminal behavior requiring integration/verification |
+| Play | Plays with the pet (needs at least 15 energy) |
+| Sleep | Pet sleeps and recharges energy until woken or fully rested |
+| Dead | Terminal state: hunger reached 100 |
+| Runaway | Terminal state: happiness reached 0 |
 
-Actions last approximately 2 seconds. Requests received while the pet is busy performing an action are ignored.
+Feed lasts 2 seconds and Play lasts 3 seconds. Requests received during them are ignored. While asleep, only Wake does anything. The pet also falls asleep on its own when energy reaches 0 and wakes on its own at 100.
 
 ### Clock
 
@@ -133,43 +133,43 @@ TIM6 is configured directly through its registers. The HAL TIM module does not n
 
 ### Pet Statistics
 
-Both statistics are limited to values between 0 and 100.
+All statistics are limited to values between 0 and 100.
 
-| Statistic | Meaning | Automatic change |
-|---|---|---|
-| Hunger | 0 = full, 100 = starving | +1 every 5 seconds |
-| Happiness | 100 = happy, 0 = miserable | −1 every 8 seconds |
+| Statistic | Meaning | Awake | Asleep |
+|---|---|---|---|
+| Hunger | 0 = full, 100 = starving | +1 every 5 seconds | +1 every 10 seconds |
+| Happiness | 100 = happy, 0 = miserable | −1 every 8 seconds | No change |
+| Energy | 100 = rested, 0 = exhausted | −1 every 10 seconds | +1 every 2 seconds |
 
-When hunger exceeds 70, happiness decreases twice as fast.
+While awake, happiness drops faster when hunger is above 70 and faster again when energy is below 20.
 
 ### User Actions
 
-| Action | Hunger | Happiness |
-|---|---|---|
-| Feed | −25 | +5 |
-| Feed while already full | No reduction | −10 |
-| Action A | — | +15 |
-| Action B | — | +15 |
-
-Action A and Action B are placeholders until their final interactions are implemented.
+| Action | Hunger | Happiness | Energy |
+|---|---|---|---|
+| Feed | −25 | +5 | — |
+| Feed while already full | No reduction | −10 | — |
+| Play | +5 | +20 | −15 |
+| Sleep | — | — | Recharges |
+| Wake with energy below 30 | — | −5 (grumpy) | — |
 
 All statistic changes are clamped to the 0–100 range.
 
-**Current state-machine behavior:** The pet dies when hunger reaches 100 or happiness reaches 0. The required runaway outcome must be verified or implemented separately.
+The pet dies when hunger reaches 100 and runs away when happiness reaches 0. Starving is checked first.
 
 The values and intervals can be adjusted through the `#define` constants in `pet_state.c`.
 
 ---
 
-
 | Event | Purpose |
 |---|---|
 | `PET_EVENT_FEED` | Start feeding |
-| `PET_EVENT_ACTION_A` | Start additional action A |
-| `PET_EVENT_ACTION_B` | Start additional action B |
-| `PET_EVENT_RESET` | Start a new pet |
+| `PET_EVENT_PLAY` | Start playing (ignored if energy is below 15) |
+| `PET_EVENT_SLEEP` | Put the pet to sleep |
+| `PET_EVENT_WAKE` | Wake the pet up |
+| `PET_EVENT_RESET` | Start a new pet after it died or ran away |
 
-Requests made while the pet is busy with an action are ignored.
+`pet_request()` can be called from peripheral code, for example a light sensor that sends Sleep when dark and Wake when bright.
 
 ---
 
@@ -181,10 +181,10 @@ Each pet state is associated with an LCD animation function.
 |---|---|
 | Idle | `anim_idle(frame)` |
 | Feed | `anim_feed(frame)` |
-| Action A | `anim_action_a(frame)` |
-| Action B | `anim_action_b(frame)` |
+| Play | `anim_play(frame)` |
+| Sleep | `anim_sleep(frame)` |
 | Dead | `anim_dead(frame)` |
-| Runaway | `anim_runaway(frame)` (if integrated) |
+| Runaway | `anim_runaway(frame)` |
 
 ### Animation Timing
 
@@ -326,7 +326,7 @@ The X-NUCLEO-GFX01M2 display has a built-in joystick for menu navigation.
 
 The interface displays the monkey's current animation and its hunger and happiness meters.
 
-The intended menu provides access to Feed, Play, and Rest, with the final actions subject to the team's peripheral integration.
+The interface also shows an energy meter. The menu provides Feed, Play, and Sleep. While the pet is asleep, Joystick Center wakes it up.
 
 ---
 

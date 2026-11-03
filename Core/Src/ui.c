@@ -24,6 +24,15 @@
 #define PET_X          88U
 #define PET_Y          116U
 
+/* Stat meters sit between the title and the animation area (y >= 100). */
+#define METER_X        86U
+#define METER_W        115U
+#define METER_H        12U
+
+#define HUNGER_Y       40U
+#define HAPPY_Y        60U
+#define ENERGY_Y       80U
+
 #define COLOR_BG       ILI9341_COLOR_BLACK
 #define COLOR_TEXT     ILI9341_COLOR_WHITE
 
@@ -39,13 +48,14 @@ static uint32_t previous_step = UINT32_MAX;
 
 static int16_t previous_hunger = -1;
 static int16_t previous_happiness = -1;
+static int16_t previous_energy = -1;
 
 
 static const char *menu_options[MENU_COUNT] =
 {
     "FEED",
     "PLAY",
-    "REST"
+    "SLEEP"
 };
 
 
@@ -60,94 +70,70 @@ void ui_init(void)
 
     previous_hunger = -1;
     previous_happiness = -1;
+    previous_energy = -1;
 }
 
 
 /* ---------------- Statistics ---------------- */
 
+static void draw_meter(uint16_t y, uint8_t value, uint16_t color)
+{
+    char text[8];
+
+    ILI9341_FillRect(
+        METER_X, y, METER_W, METER_H,
+        ILI9341_COLOR_GRAY
+    );
+
+    uint16_t width =
+        (uint16_t)((value * METER_W) / 100U);
+
+    if (width > 0)
+    {
+        ILI9341_FillRect(
+            METER_X, y,
+            width, METER_H,
+            color
+        );
+    }
+
+    snprintf(
+        text,
+        sizeof(text),
+        "%3u",
+        (unsigned)value
+    );
+
+    ILI9341_DrawString(
+        207, y + 2,
+        text,
+        COLOR_TEXT,
+        COLOR_BG,
+        1
+    );
+}
+
 static void draw_stats(void)
 {
     PetStats stats = pet_get_stats();
 
-    if (previous_hunger == stats.hunger &&
-        previous_happiness == stats.happiness)
+    if (previous_hunger != stats.hunger)
     {
-        return;
+        draw_meter(HUNGER_Y, stats.hunger, ILI9341_COLOR_ORANGE);
+        previous_hunger = stats.hunger;
     }
 
-    char text[8];
-
-    /* Hunger meter */
-
-    ILI9341_FillRect(
-        86, 50, 115, 12,
-        ILI9341_COLOR_GRAY
-    );
-
-    uint16_t hunger_width =
-        (uint16_t)((stats.hunger * 115U) / 100U);
-
-    if (hunger_width > 0)
+    if (previous_happiness != stats.happiness)
     {
-        ILI9341_FillRect(
-            86, 50,
-            hunger_width, 12,
-            ILI9341_COLOR_ORANGE
-        );
+        draw_meter(HAPPY_Y, stats.happiness, ILI9341_COLOR_GREEN);
+        previous_happiness = stats.happiness;
     }
 
-    snprintf(
-        text,
-        sizeof(text),
-        "%3u",
-        (unsigned)stats.hunger
-    );
-
-    ILI9341_DrawString(
-        207, 52,
-        text,
-        COLOR_TEXT,
-        COLOR_BG,
-        1
-    );
-
-
-    /* Happiness meter */
-
-    ILI9341_FillRect(
-        86, 77, 115, 12,
-        ILI9341_COLOR_GRAY
-    );
-
-    uint16_t happiness_width =
-        (uint16_t)((stats.happiness * 115U) / 100U);
-
-    if (happiness_width > 0)
+    if (previous_energy != stats.energy)
     {
-        ILI9341_FillRect(
-            86, 77,
-            happiness_width, 12,
-            ILI9341_COLOR_GREEN
-        );
+        draw_meter(ENERGY_Y, stats.energy, ILI9341_COLOR_CYAN);
+        previous_energy = stats.energy;
     }
-
-    snprintf(
-        text,
-        sizeof(text),
-        "%3u",
-        (unsigned)stats.happiness
-    );
-
-    ILI9341_DrawString(
-        207, 79,
-        text,
-        COLOR_TEXT,
-        COLOR_BG,
-        1
-    );
-
-    previous_hunger = stats.hunger;
-    previous_happiness = stats.happiness;
 }
 
 
@@ -212,12 +198,20 @@ static void draw_menu(PetState state)
                 message = "FEEDING...";
                 break;
 
-            case PET_STATE_ACTION_A:
+            case PET_STATE_PLAY:
                 message = "PLAYING...";
                 break;
 
-            case PET_STATE_ACTION_B:
-                message = "RESTING...";
+            case PET_STATE_SLEEP:
+                message = "SLEEPING...";
+
+                ILI9341_DrawString(
+                    45, 278,
+                    "CENTER: WAKE UP",
+                    COLOR_TEXT,
+                    COLOR_BG,
+                    1
+                );
                 break;
 
             default:
@@ -299,7 +293,7 @@ static void draw_main_screen(PetState state)
     );
 
     ILI9341_DrawString(
-        10, 52,
+        10, HUNGER_Y + 2,
         "Hunger",
         COLOR_TEXT,
         COLOR_BG,
@@ -307,8 +301,16 @@ static void draw_main_screen(PetState state)
     );
 
     ILI9341_DrawString(
-        10, 79,
+        10, HAPPY_Y + 2,
         "Happy",
+        COLOR_TEXT,
+        COLOR_BG,
+        1
+    );
+
+    ILI9341_DrawString(
+        10, ENERGY_Y + 2,
+        "Energy",
         COLOR_TEXT,
         COLOR_BG,
         1
@@ -316,6 +318,7 @@ static void draw_main_screen(PetState state)
 
     previous_hunger = -1;
     previous_happiness = -1;
+    previous_energy = -1;
     previous_step = UINT32_MAX;
 
     draw_stats();
@@ -335,10 +338,10 @@ static const SpriteSheet *get_sprite(PetState state)
         case PET_STATE_FEED:
             return &sprite_feed;
 
-        case PET_STATE_ACTION_A:
+        case PET_STATE_PLAY:
             return &sprite_action_a;
 
-        case PET_STATE_ACTION_B:
+        case PET_STATE_SLEEP:
             return &sprite_action_b;
 
         case PET_STATE_DEAD:
@@ -405,7 +408,7 @@ static void draw_animation(
 
     /* PLAY: monkey jumps left and right */
 
-    if (state == PET_STATE_ACTION_A)
+    if (state == PET_STATE_PLAY)
     {
         if (step % 2 == 0)
         {
@@ -433,7 +436,7 @@ static void draw_animation(
 
     /* REST: monkey stays low and snoozes */
 
-    if (state == PET_STATE_ACTION_B)
+    if (state == PET_STATE_SLEEP)
     {
         y = 122;
 
@@ -494,14 +497,14 @@ void anim_feed(uint32_t frame)
     render_state(PET_STATE_FEED, frame);
 }
 
-void anim_action_a(uint32_t frame)
+void anim_play(uint32_t frame)
 {
-    render_state(PET_STATE_ACTION_A, frame);
+    render_state(PET_STATE_PLAY, frame);
 }
 
-void anim_action_b(uint32_t frame)
+void anim_sleep(uint32_t frame)
 {
-    render_state(PET_STATE_ACTION_B, frame);
+    render_state(PET_STATE_SLEEP, frame);
 }
 
 void anim_dead(uint32_t frame)
@@ -529,6 +532,19 @@ void ui_joystick_event(uint8_t joystick)
         if (joystick & JOY_CENTER)
         {
             pet_request(PET_EVENT_RESET);
+        }
+
+        return;
+    }
+
+
+    /* Wake the pet up (it also wakes on its own once fully rested) */
+
+    if (state == PET_STATE_SLEEP)
+    {
+        if (joystick & JOY_CENTER)
+        {
+            pet_request(PET_EVENT_WAKE);
         }
 
         return;
@@ -608,11 +624,11 @@ void ui_joystick_event(uint8_t joystick)
                 break;
 
             case 1:
-                pet_request(PET_EVENT_ACTION_A);
+                pet_request(PET_EVENT_PLAY);
                 break;
 
             case 2:
-                pet_request(PET_EVENT_ACTION_B);
+                pet_request(PET_EVENT_SLEEP);
                 break;
 
             default:
