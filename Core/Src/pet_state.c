@@ -21,8 +21,8 @@
 #define FEED_HAPPINESS          5U    /* happiness gained per feeding       */
 #define OVERFEED_PENALTY        10U   /* happiness lost if fed while full   */
 
-#define ACTION_A_HAPPINESS      15U   /* TODO: set once action A is defined */
-#define ACTION_B_HAPPINESS      15U   /* TODO: set once action B is defined */
+#define PLAY_HAPPINESS          15U   /* TODO: tune once play is finalized  */
+#define CHECK_TEMP_HAPPINESS    15U   /* TODO: tune once check temp is final */
 
 #define ACTION_DURATION_MS      2000U /* time spent in feed/action states   */
 
@@ -74,14 +74,14 @@ static void enter_state(PetState next)
         }
         break;
 
-    case PET_STATE_ACTION_A:
-        /* TODO: start action A peripheral here */
-        stats.happiness = stat_add(stats.happiness, ACTION_A_HAPPINESS);
+    case PET_STATE_PLAY:
+        /* TODO: start sound-sensor play interaction here */
+        stats.happiness = stat_add(stats.happiness, PLAY_HAPPINESS);
         break;
 
-    case PET_STATE_ACTION_B:
-        /* TODO: start action B peripheral here */
-        stats.happiness = stat_add(stats.happiness, ACTION_B_HAPPINESS);
+    case PET_STATE_CHECK_TEMP:
+        /* TODO: read the DHT11 here */
+        stats.happiness = stat_add(stats.happiness, CHECK_TEMP_HAPPINESS);
         break;
 
     case PET_STATE_IDLE:
@@ -184,14 +184,14 @@ void pet_update(void)
     switch (state)
     {
     case PET_STATE_IDLE:
-        if      (event == PET_EVENT_FEED)     { enter_state(PET_STATE_FEED); }
-        else if (event == PET_EVENT_ACTION_A) { enter_state(PET_STATE_ACTION_A); }
-        else if (event == PET_EVENT_ACTION_B) { enter_state(PET_STATE_ACTION_B); }
+        if      (event == PET_EVENT_FEED)       { enter_state(PET_STATE_FEED); }
+        else if (event == PET_EVENT_PLAY)       { enter_state(PET_STATE_PLAY); }
+        else if (event == PET_EVENT_CHECK_TEMP) { enter_state(PET_STATE_CHECK_TEMP); }
         break;
 
     case PET_STATE_FEED:
-    case PET_STATE_ACTION_A:
-    case PET_STATE_ACTION_B:
+    case PET_STATE_PLAY:
+    case PET_STATE_CHECK_TEMP:
         /* Busy: requests made during an action are dropped. */
         if ((clock_millis() - state_entered_ms) >= ACTION_DURATION_MS)
         {

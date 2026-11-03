@@ -26,8 +26,8 @@ typedef enum
 {
     PET_STATE_IDLE = 0,
     PET_STATE_FEED,
-    PET_STATE_ACTION_A,   /* TODO: rename once the peripheral/action is decided */
-    PET_STATE_ACTION_B,   /* TODO: rename once the peripheral/action is decided */
+    PET_STATE_PLAY,
+    PET_STATE_CHECK_TEMP,
     PET_STATE_DEAD,
     PET_STATE_RUNAWAY,
     PET_STATE_COUNT
@@ -37,8 +37,8 @@ typedef enum
 {
     PET_EVENT_NONE = 0,
     PET_EVENT_FEED,
-    PET_EVENT_ACTION_A,
-    PET_EVENT_ACTION_B,
+    PET_EVENT_PLAY,
+    PET_EVENT_CHECK_TEMP,
     PET_EVENT_RESET       /* revive / start a new pet from the dead state */
 } PetEvent;
 

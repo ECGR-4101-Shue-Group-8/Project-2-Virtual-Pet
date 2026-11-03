@@ -109,8 +109,8 @@ It was developed for the HAL/CubeMX project in `Lab1_NUCLEO_L496.zip`.
 |---|---|
 | Idle | Default state; the pet waits for interactions |
 | Feed | Plays feeding animation and modifies statistics |
-| Action A | First additional interaction |
-| Action B | Second additional interaction |
+| Play | Sound-sensor interaction (planned) |
+| Check Temp | DHT11 temperature check (planned) |
 | Dead | Terminal state when the pet's needs are neglected |
 | Runaway | Additional terminal behavior requiring integration/verification |
 
@@ -148,10 +148,10 @@ When hunger exceeds 70, happiness decreases twice as fast.
 |---|---|---|
 | Feed | −25 | +5 |
 | Feed while already full | No reduction | −10 |
-| Action A | — | +15 |
-| Action B | — | +15 |
+| Play | — | +15 |
+| Check Temp | — | +15 |
 
-Action A and Action B are placeholders until their final interactions are implemented.
+Play and Check Temp currently only add happiness; their sensor behavior and dedicated animations are not implemented yet.
 
 All statistic changes are clamped to the 0–100 range.
 
@@ -165,8 +165,8 @@ The values and intervals can be adjusted through the `#define` constants in `pet
 | Event | Purpose |
 |---|---|
 | `PET_EVENT_FEED` | Start feeding |
-| `PET_EVENT_ACTION_A` | Start additional action A |
-| `PET_EVENT_ACTION_B` | Start additional action B |
+| `PET_EVENT_PLAY` | Start the play action |
+| `PET_EVENT_CHECK_TEMP` | Start the check temp action |
 | `PET_EVENT_RESET` | Start a new pet |
 
 Requests made while the pet is busy with an action are ignored.
@@ -181,8 +181,8 @@ Each pet state is associated with an LCD animation function.
 |---|---|
 | Idle | `anim_idle(frame)` |
 | Feed | `anim_feed(frame)` |
-| Action A | `anim_action_a(frame)` |
-| Action B | `anim_action_b(frame)` |
+| Play | `anim_play(frame)` |
+| Check Temp | `anim_check_temp(frame)` |
 | Dead | `anim_dead(frame)` |
 | Runaway | `anim_runaway(frame)` (if integrated) |
 

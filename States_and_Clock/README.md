@@ -5,7 +5,7 @@ Pet state machine, hunger/happiness stats, the 1 Hz stat timer, and the hook tha
 | File | What it does |
 |---|---|
 | `clock.c/.h` | TIM6 stat timer (1 tick per second) and `clock_millis()` (wraps `HAL_GetTick()`) |
-| `pet_state.c/.h` | States: Idle, Feed, Action A, Action B, Dead. Hunger and happiness stats |
+| `pet_state.c/.h` | States: Idle, Feed, Play, Check Temp, Dead. Hunger and happiness stats |
 | `pet_anim.c/.h` | Calls the matching LCD animation for whichever state the pet is in |
 
 ## Adding it to the project
@@ -54,8 +54,8 @@ Call these from anywhere, including interrupts:
 
 ```c
 pet_request(PET_EVENT_FEED);
-pet_request(PET_EVENT_ACTION_A);   // rename once the action is decided
-pet_request(PET_EVENT_ACTION_B);
+pet_request(PET_EVENT_PLAY);
+pet_request(PET_EVENT_CHECK_TEMP);
 pet_request(PET_EVENT_RESET);      // start a new pet after death
 ```
 
@@ -69,8 +69,8 @@ Each state calls one function with a frame number:
 |---|---|
 | Idle | `anim_idle(frame)` |
 | Feed | `anim_feed(frame)` |
-| Action A | `anim_action_a(frame)` |
-| Action B | `anim_action_b(frame)` |
+| Play | `anim_play(frame)` |
+| Check Temp | `anim_check_temp(frame)` |
 | Dead | `anim_dead(frame)` |
 
 - `frame == 0` means the state was just entered: clear the area and draw the first frame.

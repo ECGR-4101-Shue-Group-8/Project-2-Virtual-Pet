@@ -32,8 +32,8 @@ typedef struct
 
 extern const SpriteSheet sprite_idle;
 extern const SpriteSheet sprite_feed;
-extern const SpriteSheet sprite_action_a;
-extern const SpriteSheet sprite_action_b;
+extern const SpriteSheet sprite_play;
+extern const SpriteSheet sprite_check_temp;
 extern const SpriteSheet sprite_dead;
 extern const SpriteSheet sprite_runaway;
 
