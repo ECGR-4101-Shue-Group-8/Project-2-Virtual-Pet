@@ -49,6 +49,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/clock.c
     Core/Src/pet_state.c
     Core/Src/pet_anim.c
+    Core/Src/peripherals.c
 
     # Display and GUI
     Core/Src/display.c
