@@ -26,11 +26,12 @@ void display_draw_sprite_frame(
         sheet->pixels +
         ((uint32_t)frame * pixels_per_frame);
 
-    ILI9341_DrawRGB565Bitmap(
+        ILI9341_DrawRGB565Bitmap(
         x,
         y,
-        width,
-        height,
+        sheet->frame_width,
+        sheet->frame_height,
         frame_pixels
     );
+
 }
